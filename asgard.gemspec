@@ -4,8 +4,8 @@ require File.expand_path('../lib/asgard/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Tony La"]
   gem.email         = ["tonyla@pingg.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
+  gem.description   = %q{Write a gem description}
+  gem.summary       = %q{Write a gem summary}
   gem.homepage      = ""
 
   gem.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
@@ -15,4 +15,6 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = Asgard::VERSION
   gem.add_dependency 'aws-sdk'
+  gem.add_dependency "activesupport", "~> 3.0.0"
+  gem.add_dependency 'thor'
 end

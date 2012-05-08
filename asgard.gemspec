@@ -17,4 +17,5 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'aws-sdk'
   gem.add_dependency "activesupport", "~> 3.0.0"
   gem.add_dependency 'thor'
+  gem.add_dependency 'sprinkle'
 end

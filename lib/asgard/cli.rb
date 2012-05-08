@@ -6,7 +6,10 @@ module Asgard
 
     desc "bootstrap [NODE_NAME]", "bootstrap and provision node"
     def bootstrap( node_name )
-      Asgard::Node.bootstrap( node_name )
+      node = Asgard::Node.new( node_name)
+      puts node.config.inspect
+      #node.bootstrap( node_name )
+      node.sprinkle
     end
 
   end

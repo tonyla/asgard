@@ -2,17 +2,19 @@ module Asgard
   class Node
     include Asgard::Config::Loader
 
-    attr_accessor :config, :prototype, :run_list
+    attr_accessor :config, :platform, :run_list, :name
 
     def initialize( node_name )
+      @name = node_name
       @run_list = []
-      @config = load_config( node_name )
-      @prototype = Prototype.new( config[:prototype] )
+      @config = load_config
+      @platform = Platform.create_from_config( @name, config[:platform] )
     end
 
-    def load_config( node_name )
+
+    def load_config
       # load node config
-      node_file = "nodes/#{node_name}.rb"
+      node_file = "nodes/#{@name}.rb"
       raise RuntimeError.new( "Node file does not exist: #{node_file}" ) if !File.exists?( node_file )
       node_config = load_asgard_config( node_file )
 
@@ -30,27 +32,35 @@ module Asgard
       node_config
     end
 
-    def bootstrap( node_name )
+    def bootstrap
       ec2 = AWS::EC2.new
 
       instance = ec2.instances.create(
         prototype.ec2.config
       )
+
+      instance.add_tag( 'Name', :value => @name )
+      instance.add_tag( ec2_identifer )
       sleep 1 while instance.status == :pending
     end
 
     def sprinkle
-      ec2 = AWS::EC2.new
-      instance = ec2.instances["i-1dfa327b"]
       powder = Sprinkle::Script.new
 
+      plat = @platform
+
       # Load configurations
-      Configurator.instance.apply_config( @config[:sprinkle] )
+      Configurator.instance.apply_config( @config )
       rl = @run_list
       powder.instance_eval do
 
         # Load sprinkle packages
         Dir.glob( 'sprinkle/packages/*.rb') do |package|
+          require "#{Dir.pwd}/#{package}"
+        end
+
+        # Load sprinkle meta packages
+        Dir.glob( 'sprinkle/meta_packages/*.rb') do |package|
           require "#{Dir.pwd}/#{package}"
         end
 
@@ -68,13 +78,14 @@ module Asgard
         deployment do
 
           delivery :capistrano do
-            role :app, instance.ip_address
-            set  :user, 'root'
+            role :app, plat.url
+            set  :user, Asgard::Config.instance['cap']['user']
             set  :use_sudo, false
-            ssh_options[:keys] = "~/.ec2/uping.pem"
+            ssh_options[:keys] = Asgard::Config.instance['cap']['ssh_options']['keys']
             set  :run_method, :run
             default_run_options[:pty] = true
             default_run_options[:shell] = false # use false to NOT use a sub-shell, which helps with a lot of things
+            set :default_environment, Asgard::Config.instance['cap']['default_environment']
           end
 
           source do

@@ -1,0 +1,9 @@
+aws:
+  access_key_id:
+  secret_access_key:
+cap:
+  user:
+  ssh_options:
+    keys:
+  default_environment:
+    PATH:

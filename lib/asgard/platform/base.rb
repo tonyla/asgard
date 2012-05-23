@@ -7,6 +7,10 @@ module Asgard
         @node_name = node_name
         @config = config
       end
+
+      def bootstrap
+      end
+
     end
   end
 end

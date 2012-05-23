@@ -33,24 +33,21 @@ module Asgard
     end
 
     def bootstrap
-      ec2 = AWS::EC2.new
+      @platform.bootstrap
+    end
 
-      instance = ec2.instances.create(
-        prototype.ec2.config
-      )
-
-      instance.add_tag( 'Name', :value => @name )
-      instance.add_tag( ec2_identifer )
-      sleep 1 while instance.status == :pending
+    def delete
+      @platform.delete
     end
 
     def sprinkle
       powder = Sprinkle::Script.new
 
       plat = @platform
+      raise RuntimeError.new( "Instance #{@name} does not exist!" ) if !plat.exists?
 
       # Load configurations
-      Configurator.instance.apply_config( @config )
+      Configurator.instance.setup( @config, plat )
       rl = @run_list
       powder.instance_eval do
 
@@ -78,14 +75,14 @@ module Asgard
         deployment do
 
           delivery :capistrano do
-            role :app, plat.url
+            role :app, plat.public_dns
             set  :user, Asgard::Config.instance['cap']['user']
             set  :use_sudo, false
             ssh_options[:keys] = Asgard::Config.instance['cap']['ssh_options']['keys']
             set  :run_method, :run
             default_run_options[:pty] = true
             default_run_options[:shell] = false # use false to NOT use a sub-shell, which helps with a lot of things
-            set :default_environment, Asgard::Config.instance['cap']['default_environment']
+            set :default_environment, Asgard::Config.instance['cap']['default_environment'] if Asgard::Config.instance['cap']['default_environment']
           end
 
           source do

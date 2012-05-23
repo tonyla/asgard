@@ -10,13 +10,14 @@ module Sprinkle
     class Configurator
       include Singleton
 
-      attr_accessor :config, :environment
+      attr_accessor :config, :platform, :environment
 
       def initialize
         @config = {}
       end
 
-      def apply_config( config_override )
+      def setup( config_override, platform )
+        @platform = platform
         sprinkle_config = config_override[:sprinkle]
         @environment = config_override[:environment]
         @config.deep_merge!( sprinkle_config )

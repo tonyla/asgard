@@ -14,11 +14,6 @@ module Asgard
       def load_config!
         config = YAML.load( File.open( 'config/asgard.yml' ) )
         Asgard::Config.instance.config = config
-
-        AWS.config(
-          access_key_id: config['aws']['access_key_id'],
-          secret_access_key: config['aws']['secret_access_key']
-        )
       end
     end
 

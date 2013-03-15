@@ -2,8 +2,12 @@ module Asgard
   module Platform
     class VpsPlatform < Base
 
-      def url
-        @config[:url]
+      def public_dns
+        @config[:public_dns]
+      end
+
+      def exists?
+        true
       end
 
     end

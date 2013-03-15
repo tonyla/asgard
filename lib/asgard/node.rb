@@ -2,13 +2,15 @@ module Asgard
   class Node
     include Asgard::Config::Loader
 
-    attr_accessor :config, :platform, :run_list, :name
+    attr_accessor :config, :environment, :platform, :run_list, :name
 
     def initialize( node_name )
       @name = node_name
       @run_list = []
       @config = load_config
       @platform = Platform.create_from_config( @name, config[:platform] )
+      puts @platform.config.inspect
+      @environment = @config[:environment]
     end
 
 
@@ -47,18 +49,26 @@ module Asgard
       raise RuntimeError.new( "Instance #{@name} does not exist!" ) if !plat.exists?
 
       # Load configurations
-      Configurator.instance.setup( @config, plat )
+      Configurator.instance.setup( @config, self )
       rl = @run_list
       powder.instance_eval do
 
         # Load sprinkle packages
         Dir.glob( 'sprinkle/packages/*.rb') do |package|
-          require "#{Dir.pwd}/#{package}"
+          begin
+            require "#{Dir.pwd}/#{package}"
+            puts "Loaded package: #{package}"
+          rescue => e
+          end
         end
 
         # Load sprinkle meta packages
         Dir.glob( 'sprinkle/meta_packages/*.rb') do |package|
+          begin
           require "#{Dir.pwd}/#{package}"
+          puts "Loaded meta package: #{package}"
+          rescue => e
+          end
         end
 
         # Load sprinkle policies
@@ -76,13 +86,14 @@ module Asgard
 
           delivery :capistrano do
             role :app, plat.public_dns
-            set  :user, Asgard::Config.instance['cap']['user']
+            set  :user, plat.config[:cap][:user]
             set  :use_sudo, false
-            ssh_options[:keys] = Asgard::Config.instance['cap']['ssh_options']['keys']
+            ssh_options[:keys] = plat.config[:cap][:ssh_options][:keys] if plat.config[:cap][:ssh_options] && plat.config[:cap][:ssh_options][:keys]
+            set :password, plat.config[:cap][:password] if plat.config[:cap][:password]
             set  :run_method, :run
             default_run_options[:pty] = true
             default_run_options[:shell] = false # use false to NOT use a sub-shell, which helps with a lot of things
-            set :default_environment, Asgard::Config.instance['cap']['default_environment'] if Asgard::Config.instance['cap']['default_environment']
+            set :default_environment, plat.config[:cap][:default_environment] if plat.config[:cap][:default_environment]
           end
 
           source do

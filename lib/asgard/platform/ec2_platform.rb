@@ -3,6 +3,14 @@ module Asgard
 
     class EC2Platform < Base
 
+      def initialize( node_name, config )
+        super
+        AWS.config(
+          access_key_id: config['aws']['access_key_id'],
+          secret_access_key: config['aws']['secret_access_key']
+        )
+      end
+
       def public_dns
         server.dns_name
       end
@@ -22,7 +30,7 @@ module Asgard
         volumes.each do |volume|
           v = ec2.volumes.create( volume[:volume] )
           attachment = v.attach_to( instance, volume[:mount] )
-          v.add_tag( 'Name', :value => @node_name )
+          v.add_tag( 'Name', :value => "#{@node_name}_#{volume[:role]}" )
           v.add_tag( ec2_identifer )
           sleep 1 until attachment.status != :attaching
         end

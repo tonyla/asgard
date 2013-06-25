@@ -59,6 +59,8 @@ module Asgard
             require "#{Dir.pwd}/#{package}"
             puts "Loaded package: #{package}"
           rescue => e
+            puts "ERROR: #{e.message}"
+            puts "ERROR: #{e.backtrace}"
           end
         end
 
@@ -102,9 +104,9 @@ module Asgard
             builds   '/usr/local/build'
           end
         end
-      powder.sprinkle
+        powder.sprinkle
+      end
     end
-  end
 
   end
 end
